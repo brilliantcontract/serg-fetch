@@ -77,13 +77,15 @@ async function openAndScrape(item, delayAfterLoad = 0) {
 
   const newItem = { ...item, proxifiedUrl };
 
-  const response = await fetch(proxifiedUrl);
+  const response = await fetch(proxifiedUrl, {
+    headers: buildRequestHeaders(item, decoded),
+    redirect: 'follow',
+  });
   if (!response.ok) {
     throw new Error(`Failed to load url: ${proxifiedUrl}. HTTP ${response.status}`);
   }
 
   const html = await response.text();
-  console.log(html)
   const dom = new JSDOM(html, {
     url: response.url || proxifiedUrl,
     pretendToBeVisual: true,
@@ -121,6 +123,42 @@ async function openAndScrape(item, delayAfterLoad = 0) {
   }
 
   return result;
+}
+
+function buildRequestHeaders(item, url) {
+  const headers = new Headers();
+  const defaultUserAgent =
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
+
+  headers.set('User-Agent', item?.userAgent || defaultUserAgent);
+  headers.set(
+    'Accept',
+    'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8'
+  );
+  headers.set('Accept-Language', 'en-US,en;q=0.9');
+  headers.set('Cache-Control', 'no-cache');
+  headers.set('Pragma', 'no-cache');
+
+  if (item?.referer) {
+    headers.set('Referer', item.referer);
+  } else if (url) {
+    try {
+      const { origin } = new URL(url);
+      headers.set('Referer', origin);
+    } catch {
+      // Ignore invalid URL.
+    }
+  }
+
+  if (item?.headers && typeof item.headers === 'object') {
+    Object.entries(item.headers).forEach(([key, value]) => {
+      if (value != null) {
+        headers.set(key, String(value));
+      }
+    });
+  }
+
+  return headers;
 }
 
 async function contentScriptFunction(item, context, flags) {

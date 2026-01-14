@@ -83,6 +83,7 @@ async function openAndScrape(item, delayAfterLoad = 0) {
   }
 
   const html = await response.text();
+  console.log(html)
   const dom = new JSDOM(html, {
     url: response.url || proxifiedUrl,
     pretendToBeVisual: true,
@@ -1253,7 +1254,7 @@ function startServer() {
     }
   });
 
-  const PORT = 3021;
+  const PORT = 3333;
   app.listen(PORT, () => {
     console.log(`Server listening on http://localhost:${PORT}`);
   });

@@ -1260,13 +1260,20 @@ function startServer() {
   });
 }
 
-const mode = process.argv[2];
-
-if (mode === 'scrape') {
-  processQueue().catch((error) => {
+function runScrapeQueue() {
+  return processQueue().catch((error) => {
     console.error('Failed to run scrape queue:', error);
     process.exitCode = 1;
   });
+}
+
+const mode = process.argv[2];
+
+if (mode === 'scrape') {
+  runScrapeQueue();
+} else if (mode === 'server') {
+  startServer();
 } else {
   startServer();
+  runScrapeQueue();
 }
